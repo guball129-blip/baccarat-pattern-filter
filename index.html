@@ -2,73 +2,221 @@
 <!doctype html>
 <html lang="th">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0f172a">
+  <meta name="theme-color" content="#071b18">
   <title>Baccarat Pattern Filter</title>
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./config.js"></script>
   <script defer src="./app.js"></script>
+
+  <style>
+    body {
+      background: #071b18;
+      color: #f4ead5;
+      font-family: Arial, sans-serif;
+    }
+    .casino-panel {
+      background: #102b25;
+      border: 1px solid #315347;
+      border-radius: 12px;
+    }
+    .road-wrap {
+      overflow-x: auto;
+      background: #f1e6ce;
+      border-radius: 8px;
+      padding: 6px;
+    }
+    .road-grid {
+      display: grid;
+      grid-template-rows: repeat(6, 34px);
+      grid-auto-columns: 34px;
+      grid-auto-flow: column;
+      width: max-content;
+      min-width: 100%;
+    }
+    .road-cell {
+      width: 34px;
+      height: 34px;
+      border: 1px solid #d4c7aa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      color: #222;
+      font-size: 17px;
+      font-weight: bold;
+    }
+    .road-dot {
+      width: 25px;
+      height: 25px;
+      border: 3px solid;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+    }
+    .banker { color: #d71935; border-color: #d71935; }
+    .player { color: #1769c2; border-color: #1769c2; }
+    .tie { color: #159447; border-color: #159447; }
+    .road-title {
+      color: #e5c77b;
+      font-weight: bold;
+      font-size: 13px;
+      letter-spacing: .5px;
+    }
+    button { transition: .15s; }
+    button:active { transform: scale(.97); }
+  </style>
 </head>
-<body class="min-h-screen bg-slate-950 text-slate-100">
-  <main class="mx-auto flex min-h-screen w-full max-w-xl flex-col gap-4 px-4 py-6">
-    <header class="text-center">
-      <p class="text-xs font-semibold tracking-[.25em] text-emerald-400">STATISTICAL TOOL</p>
-      <h1 class="mt-2 text-2xl font-black">BACCARAT PATTERN FILTER</h1>
-      <p class="mt-1 text-sm text-slate-400">บันทึกผลและตรวจสอบความถี่ของรูปแบบที่เคยเกิดขึ้น</p>
-    </header>
 
-    <section class="rounded-2xl border border-slate-800 bg-slate-900 p-4">
-      <div class="flex items-center justify-between gap-3">
-        <span class="text-sm font-semibold">สถานะการเชื่อมต่อ</span>
-        <span id="connection" class="rounded-full bg-slate-800 px-3 py-1 text-xs text-amber-300">กำลังตรวจสอบ...</span>
-      </div>
-      <p id="connection-detail" class="mt-2 break-words text-xs text-slate-400">กำลังทดสอบการเชื่อมต่อ Supabase</p>
-      <button id="test-connection" class="mt-3 rounded-lg border border-slate-700 px-3 py-2 text-xs hover:bg-slate-800">ทดสอบการเชื่อมต่ออีกครั้ง</button>
-    </section>
+<body>
+<main class="mx-auto max-w-5xl px-3 py-5 space-y-4">
 
-    <section id="signal-box" class="rounded-2xl border border-slate-700 bg-slate-900 p-5 text-center">
-      <p id="signal-text" class="text-xl font-bold text-slate-200">รอผลการบันทึก</p>
-      <p id="recommendation" class="mt-2 text-sm text-slate-400">เริ่มบันทึกผล ระบบจะเริ่มวิเคราะห์ตั้งแต่ตาที่ 6</p>
-    </section>
+  <header class="text-center py-2">
+    <p class="text-xs tracking-[.35em] text-amber-400">CASINO ROAD SYSTEM</p>
+    <h1 class="text-2xl md:text-3xl font-black text-amber-100 mt-2">
+      BACCARAT
+    </h1>
+    <p class="text-xs text-emerald-300 mt-1">PATTERN FILTER · ROAD ANALYSIS</p>
+  </header>
 
-    <section class="grid grid-cols-2 gap-3">
-      <div class="rounded-xl border border-slate-800 bg-slate-900 p-4 text-center">
-        <p class="text-xs text-slate-400">ความถี่ Banker*</p>
-        <p id="prob-b" class="mt-1 text-2xl font-black text-rose-400">—</p>
-      </div>
-      <div class="rounded-xl border border-slate-800 bg-slate-900 p-4 text-center">
-        <p class="text-xs text-slate-400">ความถี่ Player*</p>
-        <p id="prob-p" class="mt-1 text-2xl font-black text-sky-400">—</p>
-      </div>
-    </section>
+  <!-- CONNECTION -->
+  <section class="casino-panel p-3">
+    <div class="flex justify-between items-center">
+      <span class="text-sm font-bold">สถานะระบบ</span>
+      <span id="connection" class="rounded-full bg-slate-800 px-3 py-1 text-xs text-amber-300">
+        กำลังตรวจสอบ...
+      </span>
+    </div>
+    <p id="connection-detail" class="text-xs text-slate-400 mt-2">
+      กำลังทดสอบ Supabase
+    </p>
+    <button id="test-connection"
+      class="mt-2 text-xs border border-emerald-700 rounded-lg px-3 py-2">
+      ทดสอบการเชื่อมต่อ
+    </button>
+  </section>
 
-    <section class="rounded-2xl border border-slate-800 bg-slate-900 p-4">
-      <div class="flex items-center justify-between gap-2 text-xs text-slate-400">
-        <span>ผลที่บันทึก <strong id="hand-count" class="text-slate-100">0</strong> ตา</span>
-        <span>รูปแบบตรงกัน <strong id="matched-info" class="text-emerald-300">0</strong></span>
-      </div>
-      <div id="history-box" class="mt-3 flex min-h-14 items-center gap-2 overflow-x-auto rounded-lg bg-slate-950 p-2">
-        <span class="text-xs italic text-slate-600">ยังไม่มีข้อมูล</span>
-      </div>
-      <div class="mt-4 grid grid-cols-3 gap-2">
-        <button data-result="B" class="rounded-xl bg-rose-600 py-3 font-bold hover:bg-rose-500">BANKER</button>
-        <button data-result="P" class="rounded-xl bg-sky-600 py-3 font-bold hover:bg-sky-500">PLAYER</button>
-        <button data-result="T" class="rounded-xl bg-emerald-600 py-3 font-bold hover:bg-emerald-500">TIE</button>
-      </div>
-      <div class="mt-2 grid grid-cols-2 gap-2">
-        <button id="undo" class="rounded-lg bg-slate-800 py-2 text-sm hover:bg-slate-700">ย้อนกลับ 1 ตา</button>
-        <button id="reset" class="rounded-lg bg-rose-950 py-2 text-sm text-rose-200 hover:bg-rose-900">ล้างกระดาน</button>
-      </div>
-    </section>
+  <!-- SIGNAL -->
+  <section id="signal-box" class="rounded-xl border border-amber-700 bg-[#18372c] p-5 text-center">
+    <p id="signal-text" class="text-xl font-black text-amber-300">
+      รอผลการบันทึก
+    </p>
+    <p id="recommendation" class="text-sm text-emerald-100 mt-2">
+      เริ่มบันทึกผล ระบบจะเริ่มวิเคราะห์ตั้งแต่ตาที่ 6
+    </p>
+  </section>
 
-    <section class="rounded-xl border border-amber-900/70 bg-amber-950/30 p-3 text-xs leading-5 text-amber-100/80">
-      <strong class="text-amber-200">ข้อควรทราบ:</strong>
-      ค่าที่แสดงคือความถี่จากข้อมูลในฐานข้อมูลย้อนหลัง ไม่ใช่การทำนายผลตาถัดไป และไม่ได้ทำให้โอกาสชนะสูงขึ้นโดยอัตโนมัติ
-      *เปอร์เซ็นต์ Banker/Player คำนวณเฉพาะผลที่ไม่ใช่ Tie
-    </section>
-    <footer class="pb-4 text-center text-xs text-slate-600">Baccarat Pattern Filter · Supabase RPC</footer>
-  </main>
+  <!-- STATISTICS -->
+  <section class="grid grid-cols-2 md:grid-cols-4 gap-2">
+    <div class="casino-panel p-3 text-center">
+      <p class="text-xs text-slate-400">BANKER</p>
+      <p id="prob-b" class="text-2xl font-black text-rose-400">—</p>
+    </div>
+    <div class="casino-panel p-3 text-center">
+      <p class="text-xs text-slate-400">PLAYER</p>
+      <p id="prob-p" class="text-2xl font-black text-sky-400">—</p>
+    </div>
+    <div class="casino-panel p-3 text-center">
+      <p class="text-xs text-slate-400">จำนวนตา</p>
+      <p id="hand-count" class="text-2xl font-black text-amber-300">0</p>
+    </div>
+    <div class="casino-panel p-3 text-center">
+      <p class="text-xs text-slate-400">รูปแบบตรงกัน</p>
+      <p id="matched-info" class="text-2xl font-black text-emerald-300">0</p>
+    </div>
+  </section>
+
+  <!-- BIG ROAD -->
+  <section class="casino-panel p-3">
+    <div class="flex justify-between items-center mb-2">
+      <span class="road-title">BIG ROAD</span>
+      <span class="text-xs text-slate-400">กระดานหลัก</span>
+    </div>
+    <div class="road-wrap">
+      <div id="big-road" class="road-grid"></div>
+    </div>
+  </section>
+
+  <!-- BEAD PLATE -->
+  <section class="casino-panel p-3">
+    <div class="flex justify-between items-center mb-2">
+      <span class="road-title">BEAD PLATE</span>
+      <span class="text-xs text-slate-400">ผลเรียงตามลำดับ</span>
+    </div>
+    <div class="road-wrap">
+      <div id="bead-plate" class="road-grid"></div>
+    </div>
+  </section>
+
+  <!-- DERIVED ROADS -->
+  <section class="casino-panel p-3">
+    <div class="road-title mb-2">BIG EYE BOY</div>
+    <div class="road-wrap">
+      <div id="big-eye" class="road-grid"></div>
+    </div>
+  </section>
+
+  <section class="casino-panel p-3">
+    <div class="road-title mb-2">SMALL ROAD</div>
+    <div class="road-wrap">
+      <div id="small-road" class="road-grid"></div>
+    </div>
+  </section>
+
+  <section class="casino-panel p-3">
+    <div class="road-title mb-2">COCKROACH PIG</div>
+    <div class="road-wrap">
+      <div id="cockroach-road" class="road-grid"></div>
+    </div>
+  </section>
+
+  <!-- RECENT RESULTS -->
+  <section class="casino-panel p-3">
+    <div class="text-sm font-bold mb-2">ผลที่บันทึกล่าสุด</div>
+    <div id="history-box"
+      class="flex min-h-12 items-center gap-2 overflow-x-auto rounded-lg bg-[#071b18] p-2">
+      <span class="text-xs text-slate-500">ยังไม่มีข้อมูล</span>
+    </div>
+  </section>
+
+  <!-- INPUT BUTTONS -->
+  <section class="casino-panel p-3">
+    <p class="text-center text-xs text-amber-300 mb-3">บันทึกผลไพ่</p>
+
+    <div class="grid grid-cols-3 gap-2">
+      <button data-result="B"
+        class="rounded-xl bg-red-700 py-4 font-black text-white hover:bg-red-600">
+        BANKER
+      </button>
+      <button data-result="P"
+        class="rounded-xl bg-blue-700 py-4 font-black text-white hover:bg-blue-600">
+        PLAYER
+      </button>
+      <button data-result="T"
+        class="rounded-xl bg-green-700 py-4 font-black text-white hover:bg-green-600">
+        TIE
+      </button>
+    </div>
+
+    <div class="grid grid-cols-2 gap-2 mt-3">
+      <button id="undo" class="rounded-lg bg-slate-700 py-3 text-sm">
+        ↶ ย้อนกลับ
+      </button>
+      <button id="reset" class="rounded-lg bg-red-950 py-3 text-sm text-red-200">
+        ล้างกระดาน
+      </button>
+    </div>
+  </section>
+
+  <p class="text-center text-xs text-slate-500 leading-5 pb-5">
+    สถิติเป็นข้อมูลย้อนหลัง ไม่ใช่การทำนายผลในอนาคต
+  </p>
+
+</main>
 </body>
 </html>
